@@ -1,0 +1,30 @@
+# PyCharm
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Виртуальное окружение
+venv/
+env/
+.venv/
+.env/
+
+# Файлы ОС
+.DS_Store
+Thumbs.db
+
+# Файлы pygame
+*.pyc
+*.pyo

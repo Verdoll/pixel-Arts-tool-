@@ -40,7 +40,7 @@ running  = True
 
 #160-230  240-310
 def print_version():
-    screen.blit(main_font.render("art master v.0.5", True, white), (7,692))
+    screen.blit(main_font.render("art master v.0.6", True, white), (1100,692))
 
 #ЗАРИСОВКА 3Х3 И 5Х5
 def draw_more(size, color, row, col, grid):
@@ -63,6 +63,51 @@ def draw_more(size, color, row, col, grid):
     return grid
 
 
+def fill_grid(color):
+    return [[color for _ in range(32)] for _ in range(32)]
+
+
+def draw_size_window():
+    pygame.draw.rect(screen, main_orange, (X_FOR_BUTTONS * 1 + 10, 0, cell_size * 5, cell_size * 2))
+    pygame.draw.rect(screen, main_gray, (0, cell_size * 2, cell_size * 9, 450))
+    # менюшка с размерами
+    pygame.draw.rect(screen, main_gray, (10, cell_size * 4, cell_size * 4, cell_size * 4))
+    if current_size == 1:
+        pygame.draw.rect(screen, main_orange, (10, cell_size * 4, cell_size * 4, cell_size * 4))
+    pygame.draw.rect(screen, white, (10, cell_size * 4, cell_size * 4, cell_size * 4), 4)
+
+    pygame.draw.rect(screen, main_gray, (10, cell_size * 10, cell_size * 4, cell_size * 4))
+    if current_size == 9:
+        pygame.draw.rect(screen, main_orange, (10, cell_size * 10, cell_size * 4, cell_size * 4))
+    pygame.draw.rect(screen, white, (10, cell_size * 10, cell_size * 4, cell_size * 4), 4)
+
+    pygame.draw.rect(screen, main_gray, (10, cell_size * 16, cell_size * 4, cell_size * 4))
+    if current_size == 25:
+        pygame.draw.rect(screen, main_orange, (10, cell_size * 16, cell_size * 4, cell_size * 4))
+    pygame.draw.rect(screen, white, (10, cell_size * 16, cell_size * 4, cell_size * 4), 4)
+
+    # 1 9 and 25
+    screen.blit(font_for_sizes.render('1', True, white), (36, cell_size * 5 - 11))
+    screen.blit(font_for_sizes.render('9', True, white), (36, cell_size * 11 - 11))
+    screen.blit(font_for_sizes.render('25', True, white), (22, cell_size * 17 - 11))
+
+
+def draw_change_color_window():
+    pygame.draw.rect(screen, main_gray, (0, cell_size * 2, cell_size * 9, 720))
+    pygame.draw.rect(screen, main_orange, (10, 0, cell_size * 5, cell_size * 2))
+    #fill   X:10-130   Y:660-700
+    pygame.draw.rect(screen, white, (10, cell_size * 33, cell_size * 6, cell_size * 2),3)
+    screen.blit(main_font.render('заливка', True, white), (30, cell_size * 33+7))
+    #colors
+    count = 1
+    for _ in colors:
+        pygame.draw.rect(screen, _, (10, 75 + cell_size * count * 4, cell_size * 4, cell_size * 4))
+        pygame.draw.rect(screen, main_gray, (10, 75 + cell_size * 4 * count, cell_size * 4, cell_size * 4), 4)
+        if current_color == _:
+            pygame.draw.rect(screen, main_orange, (10, 75 + cell_size * 4 * count, cell_size * 4, cell_size * 4), 6)
+        count += 1
+
+
 def draw(active_button):
     #полоска сверху
     pygame.draw.rect(screen, main_blue, (0, 0, 1280, 40))
@@ -70,43 +115,14 @@ def draw(active_button):
     #кнопка "цвета"  X: p15-105    Y: 0-1
     pygame.draw.rect(screen, main_gray, (X_FOR_BUTTONS*0 + 10, 0, cell_size*5, cell_size*2))
     if active_button == 'colors':
-        pygame.draw.rect(screen, main_gray, (0, cell_size*2, cell_size*9, 720))
-        pygame.draw.rect(screen, main_orange, (10, 0, cell_size*5, cell_size*2))
-        count = 1
-        for _ in colors:
-            pygame.draw.rect(screen, _, (10, 75 + cell_size*count*4, cell_size*4, cell_size*4))
-            pygame.draw.rect(screen, main_gray, (10, 75 + cell_size*4*count, cell_size*4, cell_size*4),4)
-            if current_color == _:
-                pygame.draw.rect(screen, main_orange, (10, 75 + cell_size * 4 * count, cell_size * 4, cell_size * 4), 6)
-            count+=1
+        draw_change_color_window()
     pygame.draw.rect(screen, main_blue, (X_FOR_BUTTONS*0 + 10, 0, cell_size*5, cell_size*2), 7)
     screen.blit(main_font.render('палитра', True, white), (20, 7))
 
     #кнопка "Размер кисти"   X: p125-210   Y: 0-1
     pygame.draw.rect(screen, main_gray, (X_FOR_BUTTONS*1 + 10, 0, cell_size*5, cell_size*2))
     if active_button == 'size':
-        pygame.draw.rect(screen, main_orange, (X_FOR_BUTTONS * 1 + 10, 0, cell_size * 5, cell_size * 2))
-        pygame.draw.rect(screen, main_gray, (0, cell_size*2, cell_size*9, 450))
-        #менюшка с размерами
-        pygame.draw.rect(screen, main_gray, (10, cell_size*4, cell_size*4, cell_size*4))
-        if current_size == 1:
-            pygame.draw.rect(screen, main_orange, (10, cell_size * 4, cell_size * 4, cell_size * 4))
-        pygame.draw.rect(screen, white, (10, cell_size * 4, cell_size * 4, cell_size * 4), 4)
-
-        pygame.draw.rect(screen, main_gray, (10, cell_size*10, cell_size*4, cell_size*4))
-        if current_size == 9:
-            pygame.draw.rect(screen, main_orange, (10, cell_size * 10, cell_size * 4, cell_size * 4))
-        pygame.draw.rect(screen, white, (10, cell_size * 10, cell_size * 4, cell_size * 4), 4)
-
-        pygame.draw.rect(screen, main_gray, (10, cell_size*16, cell_size*4, cell_size*4))
-        if current_size == 25:
-            pygame.draw.rect(screen, main_orange, (10, cell_size * 16, cell_size * 4, cell_size * 4))
-        pygame.draw.rect(screen, white, (10, cell_size * 16, cell_size * 4, cell_size * 4), 4)
-
-        #1 9 and 25
-        screen.blit(font_for_sizes.render('1', True, white), (36, cell_size*5-11))
-        screen.blit(font_for_sizes.render('9', True, white), (36, cell_size*11-11))
-        screen.blit(font_for_sizes.render('25', True, white), (22, cell_size*17-11))
+        draw_size_window()
 
     pygame.draw.rect(screen, main_blue, (X_FOR_BUTTONS*1 + 10, 0, cell_size*5, cell_size*2), 7)
     screen.blit(main_font.render("размер", True, white), (X_FOR_BUTTONS*1+24,7))
@@ -147,6 +163,10 @@ while running:
                             if 150+k <= mouse_y <= 230+k:
                                 current_color = colors[_-1]
                             k+=80
+
+                    elif 10 <= mouse_x <= 130 and 660 <= mouse_y <= 700:
+                        grid = fill_grid(current_color)
+
                 # взаимодействие с кнопкой "цвета"
                 elif 15 <= mouse_x <= 105 and 0 <= mouse_y <= cell_size*2:
                     active_button = 'colors'

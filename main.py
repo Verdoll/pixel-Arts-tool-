@@ -1,4 +1,5 @@
 import pygame
+import Brush
 pygame.init()
 main_font = pygame.font.SysFont("Blazma", 20)
 font_for_sizes = pygame.font.SysFont("Blazma", 50)
@@ -28,8 +29,9 @@ X_FOR_BUTTONS = 110
 
 #отступ направо - 15
 #отступ вниз - 3
-current_color = (255,255,255)
-current_size = 1
+
+brush = Brush.Brush(1, white, 'brush')
+
 screen = pygame.display.set_mode(screen_size)
 grid = [[(0,0,0) for _ in range(32)] for _ in range(32)]
 active_button = 'colors'
@@ -40,7 +42,8 @@ running  = True
 
 #160-230  240-310
 def print_version():
-    screen.blit(main_font.render("art master v.0.6", True, white), (1100,692))
+    screen.blit(main_font.render("art master v.0.75", True, white), (1100,692))
+
 
 #ЗАРИСОВКА 3Х3 И 5Х5
 def draw_more(size, color, row, col, grid):
@@ -63,26 +66,22 @@ def draw_more(size, color, row, col, grid):
     return grid
 
 
-def fill_grid(color):
-    return [[color for _ in range(32)] for _ in range(32)]
-
-
 def draw_size_window():
     pygame.draw.rect(screen, main_orange, (X_FOR_BUTTONS * 1 + 10, 0, cell_size * 5, cell_size * 2))
     pygame.draw.rect(screen, main_gray, (0, cell_size * 2, cell_size * 9, 450))
     # менюшка с размерами
     pygame.draw.rect(screen, main_gray, (10, cell_size * 4, cell_size * 4, cell_size * 4))
-    if current_size == 1:
+    if brush.size == 1:
         pygame.draw.rect(screen, main_orange, (10, cell_size * 4, cell_size * 4, cell_size * 4))
     pygame.draw.rect(screen, white, (10, cell_size * 4, cell_size * 4, cell_size * 4), 4)
 
     pygame.draw.rect(screen, main_gray, (10, cell_size * 10, cell_size * 4, cell_size * 4))
-    if current_size == 9:
+    if brush.size == 9:
         pygame.draw.rect(screen, main_orange, (10, cell_size * 10, cell_size * 4, cell_size * 4))
     pygame.draw.rect(screen, white, (10, cell_size * 10, cell_size * 4, cell_size * 4), 4)
 
     pygame.draw.rect(screen, main_gray, (10, cell_size * 16, cell_size * 4, cell_size * 4))
-    if current_size == 25:
+    if brush.size == 25:
         pygame.draw.rect(screen, main_orange, (10, cell_size * 16, cell_size * 4, cell_size * 4))
     pygame.draw.rect(screen, white, (10, cell_size * 16, cell_size * 4, cell_size * 4), 4)
 
@@ -92,10 +91,35 @@ def draw_size_window():
     screen.blit(font_for_sizes.render('25', True, white), (22, cell_size * 17 - 11))
 
 
+def fill(x,y, last_color, new_color):
+    if last_color == new_color:
+        return grid
+    stack = [(x,y)]
+    while stack:
+        cx, cy = stack.pop()
+
+        if 0 > cx or cx >= 32 or 0 > cy or cy >= 32:
+            continue
+
+        if grid[cx][cy] != last_color:
+            continue
+
+        grid[cx][cy] = new_color
+
+        stack.append((cx + 1, cy))
+        stack.append((cx, cy + 1))
+        stack.append((cx - 1, cy))
+        stack.append((cx, cy - 1))
+
+    return grid
+
+
 def draw_change_color_window():
     pygame.draw.rect(screen, main_gray, (0, cell_size * 2, cell_size * 9, 720))
     pygame.draw.rect(screen, main_orange, (10, 0, cell_size * 5, cell_size * 2))
     #fill   X:10-130   Y:660-700
+    if brush.mode == 'filler':
+        pygame.draw.rect(screen, main_orange, (10, cell_size * 33, cell_size * 6, cell_size * 2))
     pygame.draw.rect(screen, white, (10, cell_size * 33, cell_size * 6, cell_size * 2),3)
     screen.blit(main_font.render('заливка', True, white), (30, cell_size * 33+7))
     #colors
@@ -103,7 +127,7 @@ def draw_change_color_window():
     for _ in colors:
         pygame.draw.rect(screen, _, (10, 75 + cell_size * count * 4, cell_size * 4, cell_size * 4))
         pygame.draw.rect(screen, main_gray, (10, 75 + cell_size * 4 * count, cell_size * 4, cell_size * 4), 4)
-        if current_color == _:
+        if brush.color == _:
             pygame.draw.rect(screen, main_orange, (10, 75 + cell_size * 4 * count, cell_size * 4, cell_size * 4), 6)
         count += 1
 
@@ -151,9 +175,15 @@ while running:
 
                 # перекраска пикселей в основном поле
                 if 3 <= col <= 34 and 15 <= row <= 46:
-                    grid[row-15][col-3] = current_color
-                    if current_size != 1:
-                        grid = draw_more(current_size, current_color, row, col, grid)
+                    if brush.mode == 'brush':
+                        grid[row-15][col-3] = brush.color
+                        if brush.size != 1:
+                            grid = draw_more(brush.size, brush.color, row, col, grid)
+
+                    elif brush.mode == 'filler':
+                        x = row - 15
+                        y = col - 3
+                        grid = fill(x, y, grid[x][y], brush.color)
 
                     #выбор цвета
                 elif active_button == 'colors':
@@ -161,11 +191,14 @@ while running:
                         k = 0
                         for _ in range(1, 7):
                             if 150+k <= mouse_y <= 230+k:
-                                current_color = colors[_-1]
+                                brush.color = colors[_-1]
                             k+=80
 
                     elif 10 <= mouse_x <= 130 and 660 <= mouse_y <= 700:
-                        grid = fill_grid(current_color)
+                        if brush.mode == 'brush':
+                            brush.change_mode('filler')
+                        else:
+                            brush.change_mode('brush')
 
                 # взаимодействие с кнопкой "цвета"
                 elif 15 <= mouse_x <= 105 and 0 <= mouse_y <= cell_size*2:
@@ -176,11 +209,11 @@ while running:
                 #sizes
                 elif active_button == 'size' and 10 <= mouse_x <= 90:
                     if 80 <= mouse_y <= 160:
-                        current_size = 1
+                        brush.size = 1
                     elif 200 <= mouse_y <= 280:
-                        current_size = 9
+                        brush.size = 9
                     elif 320 <= mouse_y <= 400:
-                        current_size = 25
+                        brush.size = 25
                 pass
     #
 

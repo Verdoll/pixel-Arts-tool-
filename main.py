@@ -1,5 +1,9 @@
 import pygame
 import Brush
+#for testing (пишет в консоль всю инфу)
+DEBUG_MODE = False
+FPS = 120
+
 pygame.init()
 main_font = pygame.font.SysFont("Blazma", 20)
 font_for_sizes = pygame.font.SysFont("Blazma", 50)
@@ -42,7 +46,13 @@ running  = True
 
 #160-230  240-310
 def print_version():
-    screen.blit(main_font.render("art master v.0.75", True, white), (1100,692))
+    screen.blit(main_font.render("art master v.0.8", True, white), (1100,692))
+
+
+def print_quick_keys():
+    screen.blit(main_font.render("БЫСТРЫЕ КЛАВИШИ", True, white), (1050,50))
+    screen.blit(main_font.render("1, 2, 3  -  изменение", True, white), (1020, 80))
+    screen.blit(main_font.render("размера кисти", True, white), (1067, 97))
 
 
 #ЗАРИСОВКА 3Х3 И 5Х5
@@ -153,6 +163,16 @@ def draw(active_button):
 
 while running:
 
+    #зажатая клавиша
+    left, middle, right = pygame.mouse.get_pressed()
+    if left:
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        row = mouse_x // cell_size
+        col = mouse_y // cell_size
+        if 3 <= col <= 34 and 15 <= row <= 46 and brush.mode == 'brush':
+            grid[row - 15][col - 3] = brush.color
+            if brush.size != 1:
+                grid = draw_more(brush.size, brush.color, row, col, grid)
     #events
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -162,7 +182,17 @@ while running:
         mouse_x, mouse_y = pygame.mouse.get_pos()
         row = mouse_x // cell_size
         col = mouse_y // cell_size
-        print(mouse_x, mouse_y, row, col, active_button)
+        if DEBUG_MODE:
+            print(mouse_x, mouse_y, row, col, active_button)
+
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_1:
+                brush.size = 1
+            elif event.key == pygame.K_2:
+                brush.size = 9
+            elif event.key == pygame.K_3:
+                brush.size = 25
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # левая кнопка
@@ -215,6 +245,7 @@ while running:
                     elif 320 <= mouse_y <= 400:
                         brush.size = 25
                 pass
+
     #
 
 
@@ -232,15 +263,14 @@ while running:
             m+=1
         k+=1
     draw(active_button)
-    #squares with color
-
-
-    #selected color
-    #61
 
     #version
     print_version()
+
+    #quick keys
+    print_quick_keys()
+
     #clock etc.
     pygame.display.flip()
-    clock.tick(cell_size)
+    clock.tick(FPS)
 

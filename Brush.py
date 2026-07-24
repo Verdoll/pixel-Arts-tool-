@@ -19,7 +19,7 @@ class Brush():
 
 #test func
 def main():
-    brush = Brush(1, (11,12,21))
+    brush = Brush(1, (11,12,21), 'creative')
 
 
 if __name__ == '__main__':

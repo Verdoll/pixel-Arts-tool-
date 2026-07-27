@@ -1,7 +1,8 @@
 import pygame
 import Brush
+import Animation
 #for testing (пишет в консоль всю инфу)
-DEBUG_MODE = False
+DEBUG_MODE = True
 FPS = 120
 
 pygame.init()
@@ -29,15 +30,18 @@ cell_size = 20
 #y 3 to 34
 screen_size = (1280, 720)
 X_FOR_BUTTONS = 110
-
+grid = [[(0,0,0) for _ in range(32)] for _ in range(32)]
 
 #отступ направо - 15
 #отступ вниз - 3
 
+#КЛАССЫ
 brush = Brush.Brush(1, white, 'brush')
+canvas = Animation.Animation(grid, 'drawing')
+
 
 screen = pygame.display.set_mode(screen_size)
-grid = [[(0,0,0) for _ in range(32)] for _ in range(32)]
+
 active_button = 'colors'
 size = 1
 
@@ -46,12 +50,12 @@ running  = True
 
 #160-230  240-310
 def print_version():
-    screen.blit(main_font.render("art master v.0.8", True, white), (1100,692))
+    screen.blit(main_font.render("art master v.0.9", True, white), (1100,692))
 
 
 def print_quick_keys():
     screen.blit(main_font.render("БЫСТРЫЕ КЛАВИШИ", True, white), (1050,50))
-    screen.blit(main_font.render("1, 2, 3  -  изменение", True, white), (1020, 80))
+    screen.blit(main_font.render("1, 2, 3  -  изменение", True, white), (1030, 80))
     screen.blit(main_font.render("размера кисти", True, white), (1067, 97))
 
 
@@ -161,7 +165,40 @@ def draw(active_button):
     pygame.draw.rect(screen, main_blue, (X_FOR_BUTTONS*1 + 10, 0, cell_size*5, cell_size*2), 7)
     screen.blit(main_font.render("размер", True, white), (X_FOR_BUTTONS*1+24,7))
 
+    #анимация
+    pygame.draw.rect(screen, main_gray, (1035, 200, cell_size*10, cell_size*3))
+    pygame.draw.rect(screen, white, (1035, 200, cell_size * 10, cell_size * 3), 1)
+
+    pygame.draw.rect(screen, white, (1095, 200, cell_size * 4, cell_size * 3), 1)
+    screen.blit(font_for_sizes.render('<', True, white), (1050, 201))
+    if canvas.current_frame_index <= 8:
+        screen.blit(font_for_sizes.render(str(canvas.current_frame_index + 1), True, white), (1122, 201))
+    if canvas.current_frame_index >= 9:
+        screen.blit(font_for_sizes.render(str(canvas.current_frame_index + 1), True, white), (1109, 201))
+    screen.blit(font_for_sizes.render('>', True, white), (1190, 201))
+
+
+    pygame.draw.rect(screen, main_gray, (1035, 270, cell_size * 10, cell_size * 2))
+    pygame.draw.rect(screen, white, (1035, 270, cell_size * 10, cell_size * 2), 1)
+    screen.blit(main_font.render('новый кадр', True, white), (1075, 276))
+
+
+    pygame.draw.rect(screen, main_gray, (1089, 320, cell_size * 5, cell_size * 2))
+    if canvas.mode == 'animation':
+        pygame.draw.rect(screen, main_orange, (1089, 320, cell_size * 5, cell_size * 2))
+    pygame.draw.rect(screen, white, (1089, 320, cell_size * 5, cell_size * 2), 1)
+    screen.blit(main_font.render('анимация', True, white), (1090, 326))
+
+
+
+frame_counter = 0
 while running:
+
+    if canvas.mode == 'animation':
+        frame_counter += 1
+        if frame_counter >= 120 / canvas.FPS:
+            frame_counter = 0
+            grid = canvas.next_frame()
 
     #зажатая клавиша
     left, middle, right = pygame.mouse.get_pressed()
@@ -202,6 +239,19 @@ while running:
                     active_button = 'colors'
                 elif 125 <= mouse_x <= 210 and 0 <= mouse_y <= cell_size*2:
                     active_button = 'size'
+
+                #animation
+                elif 1035 <= mouse_x <= 1235 and 270 <= mouse_y <= 310:
+                    canvas.new_frame()
+                elif 1030 <= mouse_x <= 1100 and 200 <= mouse_y <= 260:
+                    if canvas.current_frame_index != 0:
+                        grid = canvas.change_frame(-1)
+                elif 1175 <= mouse_x <= 1236 and 200 <= mouse_y <= 260:
+                    if canvas.current_frame_index + 1 < len(canvas.list_of_canvas):
+                        grid = canvas.change_frame(1)
+                elif 1090 <= mouse_x <= 1190 and 320 <= mouse_y <= 360:
+                    canvas.swap_mode()
+
 
                 # перекраска пикселей в основном поле
                 if 3 <= col <= 34 and 15 <= row <= 46:

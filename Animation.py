@@ -1,3 +1,5 @@
+import copy
+
 
 class Animation():
     def __init__(self, frame, mode):
@@ -8,10 +10,24 @@ class Animation():
         self.mode = mode
 
 
-    def new_frame(self):
-        empty_grid = [[(0,0,0) for _ in range(32)] for _ in range(32)]
-        self.list_of_canvas.append(empty_grid)
+    def new_frame(self, setting):
+        if setting.coppyng:
+            new_grid = copy.deepcopy(self.list_of_canvas[-1])
+            self.list_of_canvas.append(new_grid)
+        else:
+            empty_grid = [[(0,0,0) for _ in range(32)] for _ in range(32)]
+            self.list_of_canvas.append(empty_grid)
 
+
+    def delete_frame(self):
+        if self.current_frame_index != 0:
+            self.list_of_canvas.pop(self.current_frame_index)
+            self.current_frame_index -= 1
+        elif self.current_frame_index == 0 and len(self.list_of_canvas) == 1:
+            empty_grid = [[(0,0,0) for _ in range(32)] for _ in range(32)]
+            self.list_of_canvas[self.current_frame_index] = empty_grid
+        else:
+            self.list_of_canvas.pop(self.current_frame_index)
 
     def change_frame(self, num):
         if num > 0:

@@ -1,9 +1,12 @@
 import pygame
 import Brush
 import Animation
+import settings_new_frame as settings
+import pallete as pl
+
 #for testing (пишет в консоль всю инфу)
 DEBUG_MODE = True
-FPS = 120
+FPS = 80
 
 pygame.init()
 main_font = pygame.font.SysFont("Blazma", 20)
@@ -38,6 +41,8 @@ grid = [[(0,0,0) for _ in range(32)] for _ in range(32)]
 #КЛАССЫ
 brush = Brush.Brush(1, white, 'brush')
 canvas = Animation.Animation(grid, 'drawing')
+setting = settings.Settings()
+pallete = pl.Pallete()
 
 
 screen = pygame.display.set_mode(screen_size)
@@ -50,7 +55,7 @@ running  = True
 
 #160-230  240-310
 def print_version():
-    screen.blit(main_font.render("art master v.0.9", True, white), (1100,692))
+    screen.blit(main_font.render("art master v.1.0", True, white), (1100,692))
 
 
 def print_quick_keys():
@@ -138,7 +143,7 @@ def draw_change_color_window():
     screen.blit(main_font.render('заливка', True, white), (30, cell_size * 33+7))
     #colors
     count = 1
-    for _ in colors:
+    for _ in pallete.current_set:
         pygame.draw.rect(screen, _, (10, 75 + cell_size * count * 4, cell_size * 4, cell_size * 4))
         pygame.draw.rect(screen, main_gray, (10, 75 + cell_size * 4 * count, cell_size * 4, cell_size * 4), 4)
         if brush.color == _:
@@ -154,6 +159,7 @@ def draw(active_button):
     pygame.draw.rect(screen, main_gray, (X_FOR_BUTTONS*0 + 10, 0, cell_size*5, cell_size*2))
     if active_button == 'colors':
         draw_change_color_window()
+        pl.draw_pallete(cell_size, main_font, main_gray, white, main_orange, screen, pallete)
     pygame.draw.rect(screen, main_blue, (X_FOR_BUTTONS*0 + 10, 0, cell_size*5, cell_size*2), 7)
     screen.blit(main_font.render('палитра', True, white), (20, 7))
 
@@ -178,16 +184,20 @@ def draw(active_button):
     screen.blit(font_for_sizes.render('>', True, white), (1190, 201))
 
 
-    pygame.draw.rect(screen, main_gray, (1035, 270, cell_size * 10, cell_size * 2))
-    pygame.draw.rect(screen, white, (1035, 270, cell_size * 10, cell_size * 2), 1)
-    screen.blit(main_font.render('новый кадр', True, white), (1075, 276))
+    pygame.draw.rect(screen, main_gray, (1035, 270, cell_size * 7, cell_size * 2))
+    pygame.draw.rect(screen, white, (1035, 270, cell_size * 7, cell_size * 2), 1)
+    screen.blit(main_font.render('новый кадр', True, white), (1047, 276))
 
-
-    pygame.draw.rect(screen, main_gray, (1089, 320, cell_size * 5, cell_size * 2))
+    pygame.draw.rect(screen, main_gray, (1035, 320, cell_size * 5, cell_size * 2))
     if canvas.mode == 'animation':
-        pygame.draw.rect(screen, main_orange, (1089, 320, cell_size * 5, cell_size * 2))
-    pygame.draw.rect(screen, white, (1089, 320, cell_size * 5, cell_size * 2), 1)
-    screen.blit(main_font.render('анимация', True, white), (1090, 326))
+        pygame.draw.rect(screen, main_orange, (1035, 320, cell_size * 5, cell_size * 2))
+    pygame.draw.rect(screen, white, (1035, 320, cell_size * 5, cell_size * 2), 1)
+    screen.blit(main_font.render('анимация', True, white), (1037, 326))
+
+    #настройки нового кадра
+    settings.draw_setting_unlock(cell_size, main_font, main_gray, white, main_orange, screen, setting)
+
+
 
 
 
@@ -241,16 +251,27 @@ while running:
                     active_button = 'size'
 
                 #animation
-                elif 1035 <= mouse_x <= 1235 and 270 <= mouse_y <= 310:
-                    canvas.new_frame()
+                elif 1035 <= mouse_x <= 1174 and 270 <= mouse_y <= 310:
+                    canvas.new_frame(setting)
                 elif 1030 <= mouse_x <= 1100 and 200 <= mouse_y <= 260:
                     if canvas.current_frame_index != 0:
                         grid = canvas.change_frame(-1)
                 elif 1175 <= mouse_x <= 1236 and 200 <= mouse_y <= 260:
                     if canvas.current_frame_index + 1 < len(canvas.list_of_canvas):
                         grid = canvas.change_frame(1)
-                elif 1090 <= mouse_x <= 1190 and 320 <= mouse_y <= 360:
+                elif 1035 <= mouse_x <= 1135 and 320 <= mouse_y <= 360:
                     canvas.swap_mode()
+                elif settings.swap_set_mode(mouse_x, mouse_y):
+                    setting.swap_mode()
+                elif settings.is_delete(mouse_x, mouse_y):
+                    canvas.delete_frame()
+                    grid = canvas.list_of_canvas[canvas.current_frame_index]
+
+                settings.is_coppyng(mouse_x, mouse_y, setting)
+
+                #pallete
+                pl.choice_pallete(mouse_x, mouse_y, pallete)
+
 
 
                 # перекраска пикселей в основном поле
@@ -271,7 +292,7 @@ while running:
                         k = 0
                         for _ in range(1, 7):
                             if 150+k <= mouse_y <= 230+k:
-                                brush.color = colors[_-1]
+                                brush.color = pallete.current_set[_-1]
                             k+=80
 
                     elif 10 <= mouse_x <= 130 and 660 <= mouse_y <= 700:

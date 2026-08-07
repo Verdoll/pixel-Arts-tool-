@@ -3,6 +3,7 @@ class Brush():
         self.size = size
         self.color = color
         self.mode = mode
+        self.last_mode = mode
 
 
     def change_color(self, new_color):
@@ -15,6 +16,16 @@ class Brush():
 
     def change_mode(self, new_mode):
         self.mode = new_mode
+        self.last_mode = self.mode
+
+
+    def swap_mode(self, mode1, mode2):
+        self.last_mode = self.mode
+        if self.mode == mode1:
+            self.mode = mode2
+        elif self.mode == mode2:
+            self.mode = mode1
+
 
 
 #test func

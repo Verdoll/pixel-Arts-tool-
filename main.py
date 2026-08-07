@@ -1,8 +1,12 @@
 import pygame
 import Brush
 import Animation
+import rgb_window
 import settings_new_frame as settings
 import pallete as pl
+import rgb_window as rgb
+import conditions
+import eyedropper
 
 #for testing (пишет в консоль всю инфу)
 DEBUG_MODE = True
@@ -43,6 +47,7 @@ brush = Brush.Brush(1, white, 'brush')
 canvas = Animation.Animation(grid, 'drawing')
 setting = settings.Settings()
 pallete = pl.Pallete()
+program = conditions.Program()
 
 
 screen = pygame.display.set_mode(screen_size)
@@ -55,7 +60,7 @@ running  = True
 
 #160-230  240-310
 def print_version():
-    screen.blit(main_font.render("art master v.1.0", True, white), (1100,692))
+    screen.blit(main_font.render("art master v.1.2", True, white), (1100,692))
 
 
 def print_quick_keys():
@@ -138,9 +143,12 @@ def draw_change_color_window():
     pygame.draw.rect(screen, main_orange, (10, 0, cell_size * 5, cell_size * 2))
     #fill   X:10-130   Y:660-700
     if brush.mode == 'filler':
-        pygame.draw.rect(screen, main_orange, (10, cell_size * 33, cell_size * 6, cell_size * 2))
-    pygame.draw.rect(screen, white, (10, cell_size * 33, cell_size * 6, cell_size * 2),3)
-    screen.blit(main_font.render('заливка', True, white), (30, cell_size * 33+7))
+        pygame.draw.rect(screen, main_orange, (10, cell_size * 34, cell_size * 6, cell_size * 2))
+    pygame.draw.rect(screen, white, (10, cell_size * 34, cell_size * 6, cell_size * 2),2)
+    screen.blit(main_font.render('заливка', True, white), (30, cell_size * 33+27))
+
+    eyedropper.draw(screen, main_font, brush.mode)
+
     #colors
     count = 1
     for _ in pallete.current_set:
@@ -159,6 +167,9 @@ def draw(active_button):
     pygame.draw.rect(screen, main_gray, (X_FOR_BUTTONS*0 + 10, 0, cell_size*5, cell_size*2))
     if active_button == 'colors':
         draw_change_color_window()
+        rgb.draw_button(screen,main_font, program.rgb_window, program.self_color)
+        if program.self_color and brush.mode == 'eyedropper':
+            brush.change_mode('brush')
         pl.draw_pallete(cell_size, main_font, main_gray, white, main_orange, screen, pallete)
     pygame.draw.rect(screen, main_blue, (X_FOR_BUTTONS*0 + 10, 0, cell_size*5, cell_size*2), 7)
     screen.blit(main_font.render('палитра', True, white), (20, 7))
@@ -170,6 +181,8 @@ def draw(active_button):
 
     pygame.draw.rect(screen, main_blue, (X_FOR_BUTTONS*1 + 10, 0, cell_size*5, cell_size*2), 7)
     screen.blit(main_font.render("размер", True, white), (X_FOR_BUTTONS*1+24,7))
+
+    #
 
     #анимация
     pygame.draw.rect(screen, main_gray, (1035, 200, cell_size*10, cell_size*3))
@@ -184,6 +197,7 @@ def draw(active_button):
     screen.blit(font_for_sizes.render('>', True, white), (1190, 201))
 
 
+
     pygame.draw.rect(screen, main_gray, (1035, 270, cell_size * 7, cell_size * 2))
     pygame.draw.rect(screen, white, (1035, 270, cell_size * 7, cell_size * 2), 1)
     screen.blit(main_font.render('новый кадр', True, white), (1047, 276))
@@ -191,9 +205,7 @@ def draw(active_button):
     pygame.draw.rect(screen, main_gray, (1035, 320, cell_size * 5, cell_size * 2))
     if canvas.mode == 'animation':
         pygame.draw.rect(screen, main_orange, (1035, 320, cell_size * 5, cell_size * 2))
-    pygame.draw.rect(screen, white, (1035, 320, cell_size * 5, cell_size * 2), 1)
-    screen.blit(main_font.render('анимация', True, white), (1037, 326))
-
+    Animation.draw(screen, main_font, 20, program.FPS_window)
     #настройки нового кадра
     settings.draw_setting_unlock(cell_size, main_font, main_gray, white, main_orange, screen, setting)
 
@@ -210,16 +222,25 @@ while running:
             frame_counter = 0
             grid = canvas.next_frame()
 
+    if program.self_color:
+        brush.color = (rgb.r_slider.value, rgb.g_slider.value, rgb.b_slider.value)
+
+
     #зажатая клавиша
     left, middle, right = pygame.mouse.get_pressed()
     if left:
         mouse_x, mouse_y = pygame.mouse.get_pos()
         row = mouse_x // cell_size
         col = mouse_y // cell_size
+        if program.FPS_window:
+            Animation.change_FPS_value(mouse_x, mouse_y, canvas)
+        if program.rgb_window:
+            rgb.change_sliders_value(mouse_x, mouse_y)
         if 3 <= col <= 34 and 15 <= row <= 46 and brush.mode == 'brush':
             grid[row - 15][col - 3] = brush.color
             if brush.size != 1:
                 grid = draw_more(brush.size, brush.color, row, col, grid)
+
     #events
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -230,7 +251,7 @@ while running:
         row = mouse_x // cell_size
         col = mouse_y // cell_size
         if DEBUG_MODE:
-            print(mouse_x, mouse_y, row, col, active_button)
+            print(mouse_x, mouse_y, row, col, active_button, program.self_color, brush.mode)
 
 
         if event.type == pygame.KEYDOWN:
@@ -240,6 +261,10 @@ while running:
                 brush.size = 9
             elif event.key == pygame.K_3:
                 brush.size = 25
+            elif event.key == pygame.K_e:
+                brush.swap_mode('eyedropper', 'brush')
+                if program.self_color:
+                    program.self_color = False
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # левая кнопка
@@ -263,18 +288,28 @@ while running:
                     canvas.swap_mode()
                 elif settings.swap_set_mode(mouse_x, mouse_y):
                     setting.swap_mode()
-                elif settings.is_delete(mouse_x, mouse_y):
+                elif settings.is_delete(mouse_x, mouse_y) and setting.is_window_open:
                     canvas.delete_frame()
                     grid = canvas.list_of_canvas[canvas.current_frame_index]
 
                 settings.is_coppyng(mouse_x, mouse_y, setting)
 
+                if Animation.touch_button(mouse_x, mouse_y):
+                    program.swap_fps_window()
+
                 #pallete
                 pl.choice_pallete(mouse_x, mouse_y, pallete)
 
+                #окно цветов
+                if rgb_window.touch_button(mouse_x, mouse_y, program.rgb_window):
+                    program.touch_rgb()
+                if program.rgb_window:
+                    if rgb.decide_color(mouse_x, mouse_y):
+                        program.swap_self_color()
+                        if brush.mode == 'eyedropper':
+                            brush.change_mode('brush')
 
-
-                # перекраска пикселей в основном поле
+                        # перекраска пикселей в основном поле
                 if 3 <= col <= 34 and 15 <= row <= 46:
                     if brush.mode == 'brush':
                         grid[row-15][col-3] = brush.color
@@ -286,6 +321,9 @@ while running:
                         y = col - 3
                         grid = fill(x, y, grid[x][y], brush.color)
 
+                    elif brush.mode == 'eyedropper':
+                        brush.change_color(grid[row-15][col-3])
+
                     #выбор цвета
                 elif active_button == 'colors':
                     if 10 <= mouse_x <= 86 and 150 <= mouse_y <= 650:
@@ -293,13 +331,22 @@ while running:
                         for _ in range(1, 7):
                             if 150+k <= mouse_y <= 230+k:
                                 brush.color = pallete.current_set[_-1]
+                                program.disable_self_color()
                             k+=80
 
-                    elif 10 <= mouse_x <= 130 and 660 <= mouse_y <= 700:
+                    elif 10 <= mouse_x <= 130 and 680 <= mouse_y <= 720:
                         if brush.mode == 'brush':
                             brush.change_mode('filler')
                         else:
                             brush.change_mode('brush')
+
+                    eyedropper.swap_modes(mouse_x, mouse_y, brush)
+                    if program.self_color and brush.mode == 'eyedropper':
+                        program.swap_self_color()
+
+
+
+
 
                 # взаимодействие с кнопкой "цвета"
                 elif 15 <= mouse_x <= 105 and 0 <= mouse_y <= cell_size*2:
@@ -329,8 +376,16 @@ while running:
     for row in grid:
         m = 3
         for el in row:
-
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            x = mouse_x // cell_size
+            y = mouse_y // cell_size
             pygame.draw.rect(screen, el, pygame.Rect(k*cell_size, m*cell_size, cell_size,cell_size))
+            if 3 <= y <= 34 and 15 <= x <= 46 and brush.mode=='eyedropper':
+                help_color = white
+                if grid[x-15][y-3][0] > 210 and grid[x-15][y-3][1] > 210 and grid[x-15][y-3][2] > 210:
+                    help_color = main_black
+                pygame.draw.rect(screen, help_color, pygame.Rect(x * cell_size, y * cell_size, cell_size, cell_size), 2)
+
             m+=1
         k+=1
     draw(active_button)

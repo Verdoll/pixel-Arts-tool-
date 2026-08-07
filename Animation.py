@@ -1,5 +1,7 @@
 import copy
-
+import pygame
+import colors as cl
+import sliders
 
 class Animation():
     def __init__(self, frame, mode):
@@ -9,7 +11,6 @@ class Animation():
         self.FPS = 8
         self.mode = mode
 
-
     def new_frame(self, setting):
         if setting.coppyng:
             new_grid = copy.deepcopy(self.list_of_canvas[-1])
@@ -17,6 +18,10 @@ class Animation():
         else:
             empty_grid = [[(0,0,0) for _ in range(32)] for _ in range(32)]
             self.list_of_canvas.append(empty_grid)
+
+
+    def change_FPS(self, num):
+        self.FPS = num
 
 
     def delete_frame(self):
@@ -54,6 +59,35 @@ class Animation():
             self.mode = 'animation'
         elif self.mode == 'animation':
             self.mode = 'drawing'
+
+slider = sliders.Slider((1050,400), 3, 140, 20, 10, 3, 24, cl.white, cl.white)
+slider.change_texts('', int(slider.value))
+
+def draw(screen, main_font, cell_size, boolean):
+    pygame.draw.rect(screen, cl.white, (1035, 320, cell_size * 5, cell_size * 2), 1)
+    screen.blit(main_font.render('анимация', True, cl.white), (1037, 326))
+
+    pygame.draw.rect(screen, cl.main_gray, (1145, 320, cell_size * 5-10, cell_size * 2))
+    if boolean:
+        slider.change_texts('', int(slider.value))
+        pygame.draw.rect(screen, cl.main_orange, (1145, 320, cell_size * 5 - 10, cell_size * 2))
+        pygame.draw.rect(screen, cl.main_gray, (1145-110, 370, cell_size * 10, cell_size * 3))
+        pygame.draw.rect(screen, cl.white, (1145 - 110, 370, cell_size * 10, cell_size * 3), 2)
+
+        slider.draw(screen, main_font, (1050, 400), (1203,387))
+
+    pygame.draw.rect(screen, cl.white, (1145, 320, cell_size * 5-10, cell_size * 2), 1)
+    screen.blit(main_font.render('FPS', True, cl.white), (1172, 328))
+
+
+def touch_button(x, y):
+    if 1144 <= x <= 1233 and 320 <= y <= 360:
+        return True
+    return False
+
+def change_FPS_value(x, y, canvas):
+    sliders.control_movement(slider, x, y)
+    canvas.change_FPS(slider.value)
 
 
 def main():

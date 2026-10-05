@@ -7,10 +7,11 @@ import pallete as pl
 import rgb_window as rgb
 import conditions
 import eyedropper
+import filters
 
 #for testing (пишет в консоль всю инфу)
-DEBUG_MODE = True
-FPS = 80
+DEBUG_MODE = False
+FPS = 240
 
 pygame.init()
 main_font = pygame.font.SysFont("Blazma", 20)
@@ -182,7 +183,8 @@ def draw(active_button):
     pygame.draw.rect(screen, main_blue, (X_FOR_BUTTONS*1 + 10, 0, cell_size*5, cell_size*2), 7)
     screen.blit(main_font.render("размер", True, white), (X_FOR_BUTTONS*1+24,7))
 
-    #
+    #кнопка фильтров
+    filters.draw_button(screen, main_font, cell_size, X_FOR_BUTTONS, active_button)
 
     #анимация
     pygame.draw.rect(screen, main_gray, (1035, 200, cell_size*10, cell_size*3))
@@ -265,6 +267,8 @@ while running:
                 brush.swap_mode('eyedropper', 'brush')
                 if program.self_color:
                     program.self_color = False
+            elif event.key == pygame.K_m:
+                print(grid)
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # левая кнопка
@@ -274,6 +278,8 @@ while running:
                     active_button = 'colors'
                 elif 125 <= mouse_x <= 210 and 0 <= mouse_y <= cell_size*2:
                     active_button = 'size'
+                elif filters.active_filters(mouse_x, mouse_y):
+                    active_button = 'filters'
 
                 #animation
                 elif 1035 <= mouse_x <= 1174 and 270 <= mouse_y <= 310:
@@ -364,6 +370,8 @@ while running:
                         brush.size = 25
                 pass
 
+
+
     #
 
 
@@ -389,6 +397,8 @@ while running:
             m+=1
         k+=1
     draw(active_button)
+    if active_button == 'filters':
+        filters.draw_ui(screen, cell_size, main_font)
 
     #version
     print_version()
